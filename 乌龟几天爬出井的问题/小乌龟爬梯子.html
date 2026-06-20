@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>小乌龟爬梯子 - 数学题演示</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "微软雅黑", sans-serif;
+    background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 60%, #90EE90 60%, #228B22 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    overflow-x: hidden;
+  }
+  h1 {
+    color: #FF4500;
+    font-size: 32px;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px 4px rgba(255,255,255,0.7);
+  }
+  .info {
+    background: rgba(255,255,255,0.85);
+    padding: 12px 25px;
+    border-radius: 15px;
+    font-size: 22px;
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  }
+  .day-num { color: #FF4500; font-size: 28px; }
+  .height-num { color: #1E90FF; font-size: 24px; }
+  .controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  button {
+    font-size: 24px;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: transform 0.1s, box-shadow 0.2s;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+  }
+  button:active:not(:disabled) { transform: translateY(2px); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-up { background: linear-gradient(135deg, #FFD700, #FFA500); color: #000; }
+  .btn-down { background: linear-gradient(135deg, #87CEEB, #4682B4); color: #fff; }
+  .btn-reset { background: linear-gradient(135deg, #FFB6C1, #FF69B4); color: #fff; }
+
+  .btn-night { background: linear-gradient(135deg, #483D8B, #6A5ACD); color: #fff; }
+
+  .question-text {
+    margin-top: 20px;
+    background: #fff;
+    padding: 15px 30px;
+    border-radius: 15px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #333;
+    max-width: 900px;
+    text-align: center;
+    line-height: 1.6;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    border: 3px solid #FFD700;
+  }
+  .question-text .red { color: #FF4500; }
+  .question-text .blue { color: #1E90FF; }
+  .question-text .green { color: #228B22; }
+
+  .stage {
+    position: relative;
+    width: 900px;
+    height: 650px;
+    background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 70%, #87CEFA 100%);
+    border: 4px solid #4682B4;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  }
+  .cloud {
+    position: absolute;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.8;
+  }
+  .c1 { width: 80px; height: 40px; top: 40px; left: 100px; }
+  .c1::before { content:''; position:absolute; width:50px; height:50px; background:#fff; border-radius:50%; top:-20px; left:15px; }
+  .c1::after { content:''; position:absolute; width:50px; height:50px; background:#fff; border-radius:50%; top:-10px; right:10px; }
+  .c2 { width: 100px; height: 45px; top: 80px; right: 120px; }
+  .c2::before { content:''; position:absolute; width:60px; height:60px; background:#fff; border-radius:50%; top:-25px; left:20px; }
+  .c2::after { content:''; position:absolute; width:55px; height:55px; background:#fff; border-radius:50%; top:-15px; right:15px; }
+
+  .sun {
+    position: absolute;
+    top: 20px;
+    right: 250px;
+    width: 70px;
+    height: 70px;
+    background: radial-gradient(circle, #FFD700, #FFA500);
+    border-radius: 50%;
+    box-shadow: 0 0 40px #FFD700;
+  }
+
+  .ground {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: linear-gradient(180deg, #8B7355 0%, #654321 100%);
+    border-top: 4px solid #3d2817;
+  }
+  .grass {
+    position: absolute;
+    bottom: 48px;
+    width: 100%;
+    height: 8px;
+    background: #228B22;
+  }
+
+  /* 梯子 */
+  .ladder {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 50px;
+    width: 120px;
+    height: 560px;
+  }
+  .rail {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 12px;
+    background: linear-gradient(90deg, #8B4513, #D2691E, #8B4513);
+    border-radius: 4px;
+  }
+  .rail-left { left: 0; }
+  .rail-right { right: 0; }
+  .rung {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: linear-gradient(180deg, #A0522D, #D2691E, #8B4513);
+    border-radius: 3px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* 高度刻度 */
+  .scale {
+    position: absolute;
+    left: 30%;
+    transform: translateX(-50%);
+    bottom: 50px;
+    width: 60px;
+    height: 560px;
+    pointer-events: none;
+  }
+  .scale-tick {
+    position: absolute;
+    left: 40px;
+    width: 20px;
+    height: 2px;
+    background: #333;
+  }
+  .scale-tick::after {
+    content: attr(data-h);
+    position: absolute;
+    left: -45px;
+    top: -10px;
+    width: 40px;
+    text-align: right;
+    font-size: 12px;
+    color: #333;
+    font-weight: bold;
+  }
+
+  /* 7.34米标记 */
+  .goal-mark {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 220px;
+    height: 4px;
+    background: #FF1493;
+    z-index: 5;
+  }
+  .goal-mark::before {
+    content: "🚩";
+    position: absolute;
+    left: -30px;
+    top: -20px;
+    font-size: 28px;
+  }
+  .goal-mark::after {
+    content: attr(data-label);
+    position: absolute;
+    right: -130px;
+    top: -14px;
+    background: #FF1493;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+
+  /* 小乌龟 */
+  .turtle {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 45px;
+    width: 70px;
+    height: 55px;
+    z-index: 10;
+    transition: bottom 3s linear;
+  }
+  .turtle .body {
+    position: absolute;
+    bottom: 5px;
+    left: 10px;
+    width: 50px;
+    height: 35px;
+    background: radial-gradient(ellipse at 50% 40%, #90EE90 0%, #32CD32 60%, #228B22 100%);
+    border-radius: 50% 50% 45% 45%;
+    border: 2px solid #006400;
+  }
+  .turtle .head {
+    position: absolute;
+    bottom: 25px;
+    left: -5px;
+    width: 22px;
+    height: 22px;
+    background: radial-gradient(circle, #9ACD32, #6B8E23);
+    border-radius: 50%;
+    border: 2px solid #006400;
+  }
+  .turtle .eye {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 50%;
+    top: 8px;
+    left: 5px;
+  }
+  .turtle .leg {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: radial-gradient(circle, #9ACD32, #6B8E23);
+    border-radius: 50%;
+    border: 2px solid #006400;
+    bottom: 0;
+  }
+  .turtle .leg.l1 { left: 8px; }
+  .turtle .leg.l2 { left: 28px; }
+  .turtle .leg.l3 { left: 48px; }
+  .turtle .tail {
+    position: absolute;
+    bottom: 20px;
+    right: 5px;
+    width: 12px;
+    height: 4px;
+    background: #6B8E23;
+    border-radius: 2px;
+  }
+  .turtle .shell-pattern {
+    position: absolute;
+    bottom: 10px;
+    left: 18px;
+    width: 34px;
+    height: 22px;
+    background:
+      repeating-linear-gradient(45deg, transparent 0 4px, rgba(0,100,0,0.3) 4px 5px),
+      repeating-linear-gradient(-45deg, transparent 0 4px, rgba(0,100,0,0.3) 4px 5px);
+    border-radius: 50%;
+  }
+
+  /* 高度标记 */
+  .marker {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 6;
+    pointer-events: none;
+  }
+  .marker-up {
+    width: 160px;
+    height: 3px;
+    background: #FF4500;
+  }
+  .marker-up::before {
+    content: attr(data-label);
+    position: absolute;
+    right: -110px;
+    top: -10px;
+    background: #FF4500;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .marker-down {
+    width: 160px;
+    height: 3px;
+    background: #4169E1;
+  }
+  .marker-down::before {
+    content: attr(data-label);
+    position: absolute;
+    right: -110px;
+    top: -10px;
+    background: #4169E1;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+  }
+  .marker-mid {
+    position: absolute;
+    /* 放在梯子左侧，不遮挡梯子 */
+    left: 15%;
+    transform: translateX(0);
+    background: #9400D3;
+    color: #fff;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: bold;
+    white-space: nowrap;
+    z-index: 7;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    border: 2px solid #fff;
+  }
+
+  /* 撒花 */
+  .confetti {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    top: -20px;
+    pointer-events: none;
+    z-index: 100;
+    animation: fall linear forwards;
+  }
+  @keyframes fall {
+    to {
+      transform: translateY(700px) rotate(720deg);
+      opacity: 0;
+    }
+  }
+
+  /* 消息提示 */
+  .message {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255,255,255,0.95);
+    padding: 10px 25px;
+    border-radius: 20px;
+    font-size: 20px;
+    font-weight: bold;
+    color: #FF4500;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 50;
+  }
+  .message.show { opacity: 1; }
+
+  /* 图例 */
+  .legend {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255,255,255,0.9);
+    padding: 10px 15px;
+    border-radius: 10px;
+    font-size: 13px;
+    z-index: 20;
+  }
+  .legend div { margin: 3px 0; display: flex; align-items: center; }
+  .legend .box { width: 18px; height: 8px; margin-right: 6px; border-radius: 2px; }
+</style>
+</head>
+<body>
+
+<h1>🐢 小乌龟爬梯子 🪜</h1>
+
+<div class="info">
+  当前是第 <span class="day-num" id="dayCount">0</span> 天　
+  小乌龟距离地面 <span class="height-num" id="heightVal">0.00</span> 米
+</div>
+
+<div class="controls">
+  <button class="btn-up" id="btnUp">日期 +1 天 ⬆️</button>
+  <button class="btn-night" id="btnNight" disabled>🌙 夜晚 ⬇️</button>
+  <button class="btn-down" id="btnDown">日期 -1 天 ⬇️</button>
+  <button class="btn-reset" id="btnReset">重置</button>
+</div>
+
+<div class="stage" id="stage">
+  <div class="sun"></div>
+  <div class="cloud c1"></div>
+  <div class="cloud c2"></div>
+
+  <div class="legend">
+    <div><span class="box" style="background:#FF4500"></span>向上爬行后高度</div>
+    <div><span class="box" style="background:#4169E1"></span>向下滑落后高度</div>
+    <div><span class="box" style="background:#9400D3"></span>爬行/滑落距离（左侧）</div>
+    <div><span class="box" style="background:#FF1493"></span>目标：7.34米</div>
+    <div style="margin-top:5px;font-size:11px;color:#555;">🌙 爬完后点"夜晚"按钮下滑</div>
+  </div>
+
+  <div class="message" id="message"></div>
+
+  <!-- 高度刻度 -->
+  <div class="scale" id="scale"></div>
+
+  <!-- 梯子 -->
+  <div class="ladder" id="ladder">
+    <div class="rail rail-left"></div>
+    <div class="rail rail-right"></div>
+  </div>
+
+  <!-- 7.34米目标标记 -->
+  <div class="goal-mark" id="goalMark" data-label="🎯 目标 7.34 米"></div>
+
+  <!-- 小乌龟 -->
+  <div class="turtle" id="turtle">
+    <div class="head">
+      <div class="eye"></div>
+    </div>
+    <div class="body">
+      <div class="shell-pattern"></div>
+    </div>
+    <div class="leg l1"></div>
+    <div class="leg l2"></div>
+    <div class="leg l3"></div>
+    <div class="tail"></div>
+  </div>
+
+  <div class="grass"></div>
+  <div class="ground"></div>
+</div>
+
+<div class="question-text">
+  📏 梯子高度 7.34 米，小乌龟白天向上爬 3.28 米，晚上向下滑落 1.9 米，问第几天可以爬到顶部？
+</div>
+
+<script>
+// ============ 配置 ============
+const TOTAL_HEIGHT_METERS = 10;        // 梯子总高 10 米
+const LADDER_PX = 560;                 // 梯子像素高度
+const PX_PER_METER = LADDER_PX / TOTAL_HEIGHT_METERS;  // 1 米 = 56 像素
+const GOAL_HEIGHT = 7.34;              // 目标高度
+const CLIMB_DIST = 3.28;               // 每次向上爬 3.28 米
+const SLIDE_DIST = 1.9;                // 每次下滑 1.9 米
+const CLIMB_TIME = 3000;               // 向上爬 3 秒
+const SPEED = CLIMB_DIST / CLIMB_TIME; // 米/毫秒
+const SLIDE_TIME = SLIDE_DIST / SPEED; // 下滑时间 ≈ 1737.8 毫秒
+const PAUSE_TIME = 2000;               // 停止 2 秒
+
+// ============ 状态 ============
+let day = 0;
+let currentHeight = 0;  // 当前高度（米）
+let history = [];       // 历史记录 {day, upTo, slideTo}
+let isAnimating = false;
+let hasCelebrated = false;
+let waitingForNight = false;  // 是否等待点击"夜晚"按钮
+
+// ============ DOM ============
+const stage = document.getElementById('stage');
+const turtle = document.getElementById('turtle');
+const dayCount = document.getElementById('dayCount');
+const heightVal = document.getElementById('heightVal');
+const btnUp = document.getElementById('btnUp');
+const btnNight = document.getElementById('btnNight');
+const btnDown = document.getElementById('btnDown');
+const btnReset = document.getElementById('btnReset');
+const message = document.getElementById('message');
+const goalMark = document.getElementById('goalMark');
+const ladder = document.getElementById('ladder');
+const scale = document.getElementById('scale');
+
+// ============ 初始化梯子和刻度 ============
+function initLadder() {
+  // 梯级 (每 1 米一档)
+  for (let i = 0; i <= TOTAL_HEIGHT_METERS; i++) {
+    const rung = document.createElement('div');
+    rung.className = 'rung';
+    rung.style.bottom = (i * PX_PER_METER) + 'px';
+    ladder.appendChild(rung);
+  }
+  // 7.34米标记位置
+  goalMark.style.bottom = (GOAL_HEIGHT * PX_PER_METER + 50) + 'px';
+
+  // 高度刻度
+  for (let i = 0; i <= TOTAL_HEIGHT_METERS; i += 2) {
+    const tick = document.createElement('div');
+    tick.className = 'scale-tick';
+    tick.style.bottom = (i * PX_PER_METER) + 'px';
+    tick.setAttribute('data-h', i + '米');
+    scale.appendChild(tick);
+  }
+}
+
+function meterToBottomPx(m) {
+  // 距离地面（stage底部）的像素
+  // 地面高 50px，小乌龟脚在 bottom: 45px
+  return 45 + m * PX_PER_METER;
+}
+
+function updateDisplay() {
+  dayCount.textContent = day;
+  heightVal.textContent = currentHeight.toFixed(2);
+}
+
+function showMessage(text, duration = 2000) {
+  message.textContent = text;
+  message.classList.add('show');
+  setTimeout(() => message.classList.remove('show'), duration);
+}
+
+// 清除指定天数及之后的标记
+function clearMarkersFromDay(d) {
+  const markers = stage.querySelectorAll('[data-marker-day]');
+  markers.forEach(m => {
+    if (parseInt(m.dataset.markerDay) >= d) m.remove();
+  });
+}
+
+function clearAllMarkers() {
+  const markers = stage.querySelectorAll('[data-marker-day]');
+  markers.forEach(m => m.remove());
+}
+
+// 在指定高度创建高度标记（横向线+标签）
+function addHeightMarker(height, type, dayNum) {
+  const mark = document.createElement('div');
+  mark.className = 'marker ' + (type === 'up' ? 'marker-up' : 'marker-down');
+  mark.style.bottom = meterToBottomPx(height) + 'px';
+  mark.setAttribute('data-label',
+    (type === 'up' ? '🔼 第' + dayNum + '天 爬到 ' : '🔽 第' + dayNum + '天 滑到 ') +
+    height.toFixed(2) + ' 米');
+  mark.setAttribute('data-marker-day', dayNum);
+  stage.appendChild(mark);
+}
+
+// 创建爬行/滑落距离的中间标记（紫色气泡）
+function addDistanceMarker(fromH, toH, isUp, dayNum) {
+  const midH = (fromH + toH) / 2;
+  const dist = Math.abs(toH - fromH);
+  const mark = document.createElement('div');
+  mark.className = 'marker-mid';
+  mark.style.bottom = (45 + midH * PX_PER_METER - 12) + 'px';
+  mark.textContent = (isUp ? '⬆ 向上爬 ' : '⬇ 向下滑 ') + dist.toFixed(2) + ' 米';
+  mark.setAttribute('data-marker-day', dayNum);
+  stage.appendChild(mark);
+}
+
+// ============ 撒花特效 ============
+function celebrate() {
+  const colors = ['#FF1493', '#FFD700', '#FF4500', '#00CED1', '#9400D3', '#32CD32', '#1E90FF'];
+  for (let i = 0; i < 80; i++) {
+    const c = document.createElement('div');
+    c.className = 'confetti';
+    c.style.left = Math.random() * 900 + 'px';
+    c.style.background = colors[Math.floor(Math.random() * colors.length)];
+    c.style.animationDuration = (2 + Math.random() * 2) + 's';
+    c.style.animationDelay = (Math.random() * 0.5) + 's';
+    if (Math.random() > 0.5) c.style.borderRadius = '50%';
+    else c.style.transform = 'rotate(' + (Math.random() * 360) + 'deg)';
+    stage.appendChild(c);
+    setTimeout(() => c.remove(), 4500);
+  }
+  showMessage('🎉 小乌龟爬过了 7.34 米！太厉害啦！', 3500);
+}
+
+// ============ 动画 ============
+function animateTurtle(targetHeight, duration, callback) {
+  turtle.style.transition = 'bottom ' + duration + 'ms linear';
+  turtle.style.bottom = meterToBottomPx(targetHeight) + 'px';
+  setTimeout(callback, duration + 20);
+}
+
+// ============ 日期 +1 ============
+function dayIncrease() {
+  if (isAnimating) return;
+  isAnimating = true;
+  waitingForNight = false;
+  btnNight.disabled = true;
+
+  day += 1;
+
+  const startH = currentHeight;
+  const targetUpH = Math.min(startH + CLIMB_DIST, TOTAL_HEIGHT_METERS);
+  const actualClimb = targetUpH - startH;
+  const climbDuration = (CLIMB_DIST === actualClimb) ? CLIMB_TIME : (actualClimb / SPEED);
+
+  updateDisplay();
+
+  // 向上爬 3.28 米 (3秒)
+  showMessage('🐢 第 ' + day + ' 天：小乌龟努力向上爬！');
+  animateTurtle(targetUpH, climbDuration, () => {
+    currentHeight = targetUpH;
+    updateDisplay();
+    addHeightMarker(currentHeight, 'up', day);
+    addDistanceMarker(startH, targetUpH, true, day);
+
+    // 判断是否越过 7.34 米
+    const crossedGoal = startH < GOAL_HEIGHT && currentHeight >= GOAL_HEIGHT;
+    if (crossedGoal && !hasCelebrated) {
+      hasCelebrated = true;
+      setTimeout(celebrate, 200);
+    }
+
+    // 如果已经爬到顶，就不再需要夜晚按钮
+    if (currentHeight >= TOTAL_HEIGHT_METERS - 0.001) {
+      showMessage('🏁 小乌龟爬到了梯子顶端！', 2500);
+      history.push({day: day, upTo: currentHeight, slideTo: null});
+      isAnimating = false;
+      btnNight.disabled = true;
+      return;
+    }
+
+    // 等待用户点击"夜晚"按钮
+    waitingForNight = true;
+    btnNight.disabled = false;
+    isAnimating = false;
+    showMessage('🌙 点击"夜晚"按钮，小乌龟要睡觉滑落啦！', 3000);
+  });
+}
+
+// ============ 夜晚按钮 ============
+function doNightSlide() {
+  if (!waitingForNight || isAnimating) return;
+  if (day <= 0) return;
+
+  waitingForNight = false;
+  btnNight.disabled = true;
+  isAnimating = true;
+
+  const startSlideH = currentHeight;
+  const targetSlideH = Math.max(startSlideH - SLIDE_DIST, 0);
+  const actualSlide = startSlideH - targetSlideH;
+  const slideDuration = (SLIDE_DIST === actualSlide) ? SLIDE_TIME : (actualSlide / SPEED);
+
+  showMessage('😱 夜晚来啦！小乌龟开始向下滑落！');
+  animateTurtle(targetSlideH, slideDuration, () => {
+    currentHeight = targetSlideH;
+    updateDisplay();
+    addHeightMarker(currentHeight, 'down', day);
+    addDistanceMarker(startSlideH, targetSlideH, false, day);
+
+    history.push({day: day, upTo: startSlideH, slideTo: currentHeight});
+    isAnimating = false;
+  });
+}
+
+// ============ 日期 -1 ============
+function dayDecrease() {
+  if (isAnimating) return;
+  if (day <= 0) {
+    showMessage('⚠️ 日期不能小于 0！');
+    return;
+  }
+  day -= 1;
+  waitingForNight = false;
+  btnNight.disabled = true;
+
+  // 回退到前一天的滑落后状态
+  if (history.length > 0) {
+    history.pop();
+    resetStateFromHistory();
+  } else {
+    currentHeight = 0;
+  }
+
+  // 清除当前天数及之后的标记
+  clearMarkersFromDay(day + 1);
+
+  // 如果回退后高度 < 7.34，允许再次庆祝
+  if (currentHeight < GOAL_HEIGHT) hasCelebrated = false;
+
+  updateDisplay();
+  turtle.style.transition = 'none';
+  turtle.style.bottom = meterToBottomPx(currentHeight) + 'px';
+  showMessage('↩ 回退到第 ' + day + ' 天');
+}
+
+// 根据 history 重建状态
+function resetStateFromHistory() {
+  currentHeight = 0;
+  for (const rec of history) {
+    if (rec.slideTo !== null) {
+      currentHeight = rec.slideTo;
+    } else {
+      currentHeight = rec.upTo;
+    }
+  }
+}
+
+// ============ 重置 ============
+function reset() {
+  if (isAnimating) return;
+  day = 0;
+  currentHeight = 0;
+  history = [];
+  hasCelebrated = false;
+  waitingForNight = false;
+  btnNight.disabled = true;
+  clearAllMarkers();
+  updateDisplay();
+  turtle.style.transition = 'none';
+  turtle.style.bottom = meterToBottomPx(0) + 'px';
+  showMessage('🔄 已重置，从第 0 天开始！');
+}
+
+// ============ 绑定事件 ============
+btnUp.addEventListener('click', dayIncrease);
+btnNight.addEventListener('click', doNightSlide);
+btnDown.addEventListener('click', dayDecrease);
+btnReset.addEventListener('click', reset);
+
+// 初始化
+initLadder();
+updateDisplay();
+turtle.style.bottom = meterToBottomPx(0) + 'px';
+
+// 首次提示
+setTimeout(() => showMessage('👋 点击"日期+1"按钮，看看小乌龟每天能爬多高！', 3500), 500);
+</script>
+
+</body>
+</html>
